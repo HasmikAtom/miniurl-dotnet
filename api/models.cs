@@ -20,8 +20,3 @@ public class ResolveRequest
     [FromRoute(Name = "shortUrl")] // wouldnt work without this
     public string ShortURL { get; set; }
 }
-public class ResolveResponse
-{
-    public string ResolvedUrl { get; set; }
-    public string Message { get; set; }
-}

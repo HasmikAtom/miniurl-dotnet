@@ -43,6 +43,7 @@ public class MiniUrlController : ControllerBase
         // TODO: add validation for the url
         // TODO: prevent shortening of this app's url (localhost, etc)
         
+        // TODO: lookup redis async/await
         
         string urlId = Guid.NewGuid().ToString();
         urlId = urlId.Substring(0, 8);
@@ -58,19 +59,13 @@ public class MiniUrlController : ControllerBase
     }
     
     [HttpGet("{shortUrl}", Name = "Resolve")]
-    public ActionResult<ResolveResponse> Get([FromRoute] ResolveRequest req)
+    public ActionResult Get([FromRoute] ResolveRequest req)
     {
         // TODO: rate limiting, decrease api usage counter for the specific IP after every call
         
         var fullUrl = _redis0.StringGet(req.ShortURL).ToString();
-        Console.WriteLine(fullUrl);
-        var res = new ResolveResponse()
-        {
-            ResolvedUrl = fullUrl ,
-            Message = "Success"
-        };
-        // TODO: redirect to the original url instead of responding as json
-        return res;
+        // TODO: handle cases like urlid doesnt exist
+        return Redirect(fullUrl);
     }
     
 }
