@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .grid-container {
+
+    }
+    .game-grid {
+        background-color: orange;
+        width: 100%;
+        height: 100%;
+    }
+    .cell {
+        width: 50px;
+        height: 50px;
+        border: 1px solid black;
+    }
+    .clicked-cell {
+        background-color: black;
+        border-color: white;
+    }
+
+}
