@@ -1,8 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
-using NRedisStack;
-using NRedisStack.RedisStackCommands;
 
 
 namespace Herxagon.MiniUrl.Api.Controllers;
@@ -14,25 +11,20 @@ public class MiniUrlController : ControllerBase
 {
     
     private readonly ILogger<MiniUrlController> _logger;
-    private readonly IConfiguration _config;
-    private readonly string _domain;
-    private readonly IDatabase _redis0; // shortened url store
-    private readonly IDatabase _redis1; // rate limiting management store
+    private readonly string? _domain;
+    private readonly RedisActions _redis;
     
     
     public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IConnectionMultiplexer multiplexer)
     {
-
-        _config = configuration;
         _logger = logger;
-        _domain = _config["Domain"];
-        _redis0 = multiplexer.GetDatabase(0);
-        _redis1 = multiplexer.GetDatabase(1);
+        _domain = configuration["Domain"];
+        _redis = new RedisActions(multiplexer.GetDatabase(0), multiplexer.GetDatabase(1));
     }
 
     
     [HttpPost(Name = "Minify")]
-    public ActionResult<MinifyResponse> Post([FromBody] MinifyRequest body)
+    public async Task<MinifyResponse> Post([FromBody] MinifyRequest body)
     {
         
         // TODO: add rate limiting
@@ -48,7 +40,8 @@ public class MiniUrlController : ControllerBase
         string urlId = Guid.NewGuid().ToString();
         urlId = urlId.Substring(0, 8);
         
-        _redis0.StringSet(urlId, body.URL);
+        await _redis.Store( urlId, body.URL); 
+
         var res = new MinifyResponse()
         {
             MinifiedURL = _domain + "/miniurl/" + urlId,
@@ -59,11 +52,11 @@ public class MiniUrlController : ControllerBase
     }
     
     [HttpGet("{shortUrl}", Name = "Resolve")]
-    public ActionResult Get([FromRoute] ResolveRequest req)
+    public async Task<RedirectResult> Get([FromRoute] ResolveRequest req)
     {
         // TODO: rate limiting, decrease api usage counter for the specific IP after every call
-        
-        var fullUrl = _redis0.StringGet(req.ShortURL).ToString();
+        var fullUrl = await _redis.Get(req.ShortURL);
+        Console.Write(fullUrl);
         // TODO: handle cases like urlid doesnt exist
         return Redirect(fullUrl);
     }
