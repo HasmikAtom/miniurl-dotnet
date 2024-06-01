@@ -1,3 +1,4 @@
+using Herxagon.MiniUrl.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 
@@ -24,7 +25,7 @@ public class MiniUrlController : ControllerBase
 
     
     [HttpPost(Name = "Minify")]
-    public async Task<MinifyResponse> Post([FromBody] MinifyRequest body)
+    public async Task<ActionResult> Post([FromBody] MinifyRequest body)
     {
         
         // TODO: add rate limiting
@@ -37,22 +38,21 @@ public class MiniUrlController : ControllerBase
         
         // TODO: lookup redis async/await
         
-        string urlId = Guid.NewGuid().ToString();
-        urlId = urlId.Substring(0, 8);
         
-        await _redis.Store( urlId, body.URL); 
+        
+        var url = await _redis.Store(body.URL); 
 
-        var res = new MinifyResponse()
+        var res = new MinifyResponse() 
         {
-            MinifiedURL = _domain + "/miniurl/" + urlId,
+            MinifiedURL = _domain + url,
             Message = "URL Minified"
         };
-        
-        return res;
+
+        return Ok(res);
     }
     
     [HttpGet("{shortUrl}", Name = "Resolve")]
-    public async Task<RedirectResult> Get([FromRoute] ResolveRequest req)
+    public async Task<ActionResult> Get([FromRoute] ResolveRequest req)
     {
         // TODO: rate limiting, decrease api usage counter for the specific IP after every call
         var fullUrl = await _redis.Get(req.ShortURL);
