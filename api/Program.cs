@@ -24,7 +24,7 @@ builder.Services.AddSingleton<IStorageService>(sp =>
 {
     IConnectionMultiplexer connection = sp.GetRequiredService<IConnectionMultiplexer>();
     var configuration = sp.GetRequiredService<IConfiguration>(); //app settings, env variables
-    var expiration = configuration.GetValue<TimeSpan>("UrlExpiration");;
+    var expiration = configuration.GetValue<Double>("UrlExpiration");;
     
     return new RedisStore(connection.GetDatabase(0), connection.GetDatabase(1), expiration);
 });

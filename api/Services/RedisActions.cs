@@ -14,11 +14,11 @@ public class RedisStore: IStorageService
     private  readonly IDatabase _redis1;
     private readonly TimeSpan? _urlExpiration;
 
-    public RedisStore(IDatabase redis0, IDatabase redis1, TimeSpan urlExpiration)
+    public RedisStore(IDatabase redis0, IDatabase redis1, double urlExpiration)
     {
         _redis0 = redis0;
         _redis1 = redis1;
-        _urlExpiration = urlExpiration;
+        _urlExpiration = TimeSpan.FromHours(urlExpiration);
     }
     public async Task<string> Store(string url)
     {
