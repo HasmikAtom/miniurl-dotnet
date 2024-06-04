@@ -23,7 +23,10 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddSingleton<IStorageService>(sp =>
 {
     IConnectionMultiplexer connection = sp.GetRequiredService<IConnectionMultiplexer>();
-    return new RedisStore(connection.GetDatabase(0), connection.GetDatabase(1));
+    var configuration = sp.GetRequiredService<IConfiguration>(); //app settings, env variables
+    var expiration = configuration.GetValue<TimeSpan>("UrlExpiration");;
+    
+    return new RedisStore(connection.GetDatabase(0), connection.GetDatabase(1), expiration);
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

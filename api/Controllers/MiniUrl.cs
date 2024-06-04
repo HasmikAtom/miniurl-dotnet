@@ -14,7 +14,7 @@ public class MiniUrlController : ControllerBase
     private readonly ILogger<MiniUrlController> _logger;
     private readonly IStorageService _redis;
     private readonly string? _domain;
-    private readonly TimeSpan? _urlExpiration;
+    
     
     
     public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IStorageService redis)
@@ -22,7 +22,6 @@ public class MiniUrlController : ControllerBase
         _logger = logger;
         _redis = redis;
         _domain = configuration["Domain"];
-        _urlExpiration = configuration.GetValue<TimeSpan>("UrlExpiration");
     }
 
     
@@ -39,7 +38,7 @@ public class MiniUrlController : ControllerBase
         
         // TODO: lookup redis async/await
         
-        var url = await _redis.Store(body.URL, _urlExpiration); 
+        var url = await _redis.Store(body.URL); 
 
         var res = new MinifyResponse() 
         {
