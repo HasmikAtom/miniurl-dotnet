@@ -1,8 +1,6 @@
-using System.Text.Json;
+using Herxagon.MiniUrl.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
-using NRedisStack;
-using NRedisStack.RedisStackCommands;
+
 
 
 namespace Herxagon.MiniUrl.Api.Controllers;
@@ -14,27 +12,22 @@ public class MiniUrlController : ControllerBase
 {
     
     private readonly ILogger<MiniUrlController> _logger;
-    private readonly IConfiguration _config;
-    private readonly string _domain;
-    private readonly IDatabase _redis0; // shortened url store
-    private readonly IDatabase _redis1; // rate limiting management store
+    private readonly IStorageService _redis;
+    private readonly string? _domain;
     
     
-    public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IConnectionMultiplexer multiplexer)
+    
+    public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IStorageService redis)
     {
-
-        _config = configuration;
         _logger = logger;
-        _domain = _config["Domain"];
-        _redis0 = multiplexer.GetDatabase(0);
-        _redis1 = multiplexer.GetDatabase(1);
+        _redis = redis;
+        _domain = configuration["Domain"];
     }
 
     
     [HttpPost(Name = "Minify")]
-    public ActionResult<MinifyResponse> Post([FromBody] MinifyRequest body)
+    public async Task<ActionResult> Post([FromBody] MinifyRequest body)
     {
-        
         // TODO: add rate limiting
         // TODO: rate limiting should be based on the IP address
         // TODO: rate limiting should be x number of attempts every x amount of time
@@ -45,25 +38,23 @@ public class MiniUrlController : ControllerBase
         
         // TODO: lookup redis async/await
         
-        string urlId = Guid.NewGuid().ToString();
-        urlId = urlId.Substring(0, 8);
-        
-        _redis0.StringSet(urlId, body.URL);
-        var res = new MinifyResponse()
+        var url = await _redis.Store(body.URL); 
+
+        var res = new MinifyResponse() 
         {
-            MinifiedURL = _domain + "/miniurl/" + urlId,
+            MinifiedURL = _domain + url,
             Message = "URL Minified"
         };
-        
-        return res;
+
+        return Ok(res);
     }
     
     [HttpGet("{shortUrl}", Name = "Resolve")]
-    public ActionResult Get([FromRoute] ResolveRequest req)
+    public async Task<ActionResult> Get([FromRoute] ResolveRequest req)
     {
         // TODO: rate limiting, decrease api usage counter for the specific IP after every call
-        
-        var fullUrl = _redis0.StringGet(req.ShortURL).ToString();
+        var fullUrl = await _redis.Get(req.ShortURL);
+        Console.Write(fullUrl);
         // TODO: handle cases like urlid doesnt exist
         return Redirect(fullUrl);
     }
