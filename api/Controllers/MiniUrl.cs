@@ -12,23 +12,23 @@ public class MiniUrlController : ControllerBase
 {
     
     private readonly ILogger<MiniUrlController> _logger;
-    private readonly string? _domain;
     private readonly IStorageService _redis;
+    private readonly string? _domain;
+    private readonly TimeSpan? _urlExpiration;
     
     
     public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IStorageService redis)
     {
         _logger = logger;
-        _domain = configuration["Domain"];
         _redis = redis;
+        _domain = configuration["Domain"];
+        _urlExpiration = configuration.GetValue<TimeSpan>("UrlExpiration");
     }
 
     
     [HttpPost(Name = "Minify")]
     public async Task<ActionResult> Post([FromBody] MinifyRequest body)
     {
-        _logger.Log(LogLevel.Trace, "Minify");
-        _logger.LogTrace("Minify");
         // TODO: add rate limiting
         // TODO: rate limiting should be based on the IP address
         // TODO: rate limiting should be x number of attempts every x amount of time
@@ -39,7 +39,7 @@ public class MiniUrlController : ControllerBase
         
         // TODO: lookup redis async/await
         
-        var url = await _redis.Store(body.URL); 
+        var url = await _redis.Store(body.URL, _urlExpiration); 
 
         var res = new MinifyResponse() 
         {
