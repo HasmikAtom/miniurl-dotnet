@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Herxagon.MiniUrl.Api;
+using Herxagon.MiniUrl.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var redisConnectionString = configuration.GetConnectionString("Redis");
     return ConnectionMultiplexer.Connect(redisConnectionString);
 });
-
+builder.Services.AddSingleton<IStorageService>(sp =>
+{
+    IConnectionMultiplexer connection = sp.GetRequiredService<IConnectionMultiplexer>();
+    return new RedisStore(connection.GetDatabase(0), connection.GetDatabase(1));
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

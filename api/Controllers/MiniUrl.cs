@@ -1,6 +1,6 @@
 using Herxagon.MiniUrl.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
+
 
 
 namespace Herxagon.MiniUrl.Api.Controllers;
@@ -13,21 +13,22 @@ public class MiniUrlController : ControllerBase
     
     private readonly ILogger<MiniUrlController> _logger;
     private readonly string? _domain;
-    private readonly RedisActions _redis;
+    private readonly IStorageService _redis;
     
     
-    public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IConnectionMultiplexer multiplexer)
+    public MiniUrlController(IConfiguration configuration, ILogger<MiniUrlController> logger, IStorageService redis)
     {
         _logger = logger;
         _domain = configuration["Domain"];
-        _redis = new RedisActions(multiplexer.GetDatabase(0), multiplexer.GetDatabase(1));
+        _redis = redis;
     }
 
     
     [HttpPost(Name = "Minify")]
     public async Task<ActionResult> Post([FromBody] MinifyRequest body)
     {
-        
+        _logger.Log(LogLevel.Trace, "Minify");
+        _logger.LogTrace("Minify");
         // TODO: add rate limiting
         // TODO: rate limiting should be based on the IP address
         // TODO: rate limiting should be x number of attempts every x amount of time
@@ -37,8 +38,6 @@ public class MiniUrlController : ControllerBase
         // TODO: prevent shortening of this app's url (localhost, etc)
         
         // TODO: lookup redis async/await
-        
-        
         
         var url = await _redis.Store(body.URL); 
 

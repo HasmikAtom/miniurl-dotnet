@@ -2,12 +2,18 @@ using StackExchange.Redis;
 
 namespace Herxagon.MiniUrl.Api.Services;
 
-public class RedisActions
+public interface IStorageService
+{
+    Task<string> Store(string url);
+    Task<string> Get(string urlId);
+}
+
+public class RedisStore: IStorageService
 {
     private  readonly IDatabase _redis0;
     private  readonly IDatabase _redis1;
 
-    public RedisActions(IDatabase redis0, IDatabase redis1)
+    public RedisStore(IDatabase redis0, IDatabase redis1)
     {
         _redis0 = redis0;
         _redis1 = redis1;
